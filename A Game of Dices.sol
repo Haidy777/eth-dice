@@ -2,13 +2,18 @@ pragma solidity 0.4.20;
 
 contract zeroOrOne {
     uint private initialNonce = 2;
+    uint private counter = 0;
 
-    function randFromLastBlocks() internal returns (uint){
-        initialNonce = minMax(block.timestamp, 2, 255);
-        //change the initialNonce based on the current blockTimestamp
+    function randFromLastBlocks() internal returns (uint) {
+        counter++;
+        initialNonce = minMax((block.timestamp + block.difficulty + block.gaslimit + block.number + counter), 2, 255);
+
+        if (counter > 777) {
+            counter = 0;
+        }
 
         uint blocksToConsider = minMax(uint(block.blockhash(block.number - initialNonce)), 2, 255);
-        //pseudeo random number of blocks which will be used to calculate a pseudorandom number
+        //pseudo random number of blocks which will be used to calculate a pseudo random number
         uint randomNumber = 0;
 
         for (uint i = 0; i <= blocksToConsider; i++) {
@@ -40,8 +45,14 @@ contract dice {
     }
 
     zeroOrOne zoO = new zeroOrOne();
-    address owner = msg.sender;
-    uint collectedFees = 0;
+    address private owner = msg.sender;
+    uint private collectedFees = 0;
+    mapping(address => uint) private kindDonators;
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
 
     function roll() public payable {
         uint value = msg.value;
@@ -64,29 +75,34 @@ contract dice {
         }
     }
 
-    function preloadContract() public payable returns (string) {
+    function donateForGamble() public payable returns (string) {
+        kindDonators[msg.sender] += msg.value;
         return "Thanks for providing funds to gamble!";
+    }
+
+    function getBackDonation() {
+        uint donationAmount = kindDonators[msg.sender];
+
+        if (donationAmount != 0 && collectedFees > 0) {
+            kindDonators[msg.sender] = 0;
+
+            msg.sender.transfer(donationAmount + div(collectedFees / 100)); // every donator gets a bonus when he gets his donation back
+        }
     }
 
     function getFeeBalance() public view returns (uint){
         return collectedFees;
     }
 
-    function collectFees() public {
-        if (msg.sender == owner) {
-            uint colFees = collectedFees;
+    function collectFees() public onlyOwner {
+        uint colFees = collectedFees;
 
-            collectedFees = 0;
+        collectedFees = 0;
 
-            msg.sender.transfer(colFees);
-        } else {
-            revert();
-        }
+        msg.sender.transfer(colFees);
     }
 
-    function itsTimeToDie() public {
-        if (msg.sender == owner) {
-            selfdestruct(owner);
-        }
+    function itsTimeToDie() public onlyOwner {
+        selfdestruct(owner);
     }
 }
