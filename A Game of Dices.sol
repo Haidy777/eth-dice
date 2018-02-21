@@ -80,13 +80,16 @@ contract dice {
         return "Thanks for providing funds to gamble!";
     }
 
-    function getBackDonation() {
+    function getBackDonation() public {
         uint donationAmount = kindDonators[msg.sender];
 
         if (donationAmount != 0 && collectedFees > 0) {
             kindDonators[msg.sender] = 0;
 
-            msg.sender.transfer(donationAmount + div(collectedFees / 100)); // every donator gets a bonus when he gets his donation back
+            msg.sender.transfer(donationAmount + div(collectedFees, 100));
+            // every donator gets a bonus when he gets his donation back
+        } else {
+            revert();
         }
     }
 
