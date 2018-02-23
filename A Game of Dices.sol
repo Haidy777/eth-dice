@@ -38,7 +38,7 @@ contract zeroOrOne {
     }
 
     function rand() public returns (uint) {
-        return minMax(randFromLastBlocks(), 0, 1);
+        return minMax(randFromLastBlocks(), 0, 10);
     }
 }
 
@@ -62,7 +62,7 @@ contract DiceContract {
 
         uint willWin = zoO.rand();
 
-        if (willWin == 1) {
+        if (willWin >= 5) {
             uint winAmount = value * 2;
             uint onePercent = winAmount / 100;
 
